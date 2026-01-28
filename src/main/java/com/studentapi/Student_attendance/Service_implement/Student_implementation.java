@@ -1,12 +1,11 @@
 package com.studentapi.Student_attendance.Service_implement;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.UUID;
-import org.springframework.util.StringUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.studentapi.Student_attendance.DTO.StudentDto;
 import com.studentapi.Student_attendance.Entity.StudentEntity;
@@ -15,16 +14,19 @@ import com.studentapi.Student_attendance.Services.StudentService;
 
 @Service
 public class Student_implementation implements StudentService {
- @Autowired
+
+    @Autowired
     private StudentRepo repository;
 
-    private final String UPLOAD_DIR = "uploads/";
+    // ABSOLUTE PATH (FIX)
+    private final String UPLOAD_DIR =
+            System.getProperty("user.dir") + File.separator + "uploads";
+
     @Override
     public StudentEntity saveStudent(StudentDto dto) {
-        
 
-        StudentEntity student=new StudentEntity();
-          student.setName(dto.getName());
+        StudentEntity student = new StudentEntity();
+        student.setName(dto.getName());
         student.setRollNo(dto.getRollNo());
         student.setRegdNo(dto.getRegdNo());
         student.setMobileNo(dto.getMobileNo());
@@ -35,28 +37,30 @@ public class Student_implementation implements StudentService {
         student.setSection(dto.getSection());
         student.setGroupName(dto.getGroupName());
         student.setPassword(dto.getPassword());
-     
+        student.setSemester(dto.getSemester());
 
-         // Image Upload
+        // IMAGE UPLOAD (CORRECT)
         if (dto.getImage() != null && !dto.getImage().isEmpty()) {
             try {
+                File uploadDir = new File(UPLOAD_DIR);
+                if (!uploadDir.exists()) {
+                    uploadDir.mkdirs();
+                }
+
                 String fileName = UUID.randomUUID() + "_" +
                         StringUtils.cleanPath(dto.getImage().getOriginalFilename());
 
-                File uploadDir = new File(UPLOAD_DIR);
-                if (!uploadDir.exists()) uploadDir.mkdirs();
+                File dest = new File(uploadDir, fileName);
+                dto.getImage().transferTo(dest);
 
-                File file = new File(UPLOAD_DIR + fileName);
-                dto.getImage().transferTo(file);
+                student.setImagePath(dest.getAbsolutePath());
 
-                student.setImagePath(file.getAbsolutePath());
-            } catch (IOException e) {
+            } catch (Exception e) {
+                e.printStackTrace();
                 throw new RuntimeException("Image upload failed");
             }
         }
 
         return repository.save(student);
     }
-    }
-    
-
+}

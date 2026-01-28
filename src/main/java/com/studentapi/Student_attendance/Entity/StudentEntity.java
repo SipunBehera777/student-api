@@ -34,6 +34,7 @@ public class StudentEntity {
 
     
     private String email;
+    private String semester;
 
     private String batch;
     private String department;
